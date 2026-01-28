@@ -60,18 +60,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="Value_at_risk_files/libs/clipboard/clipboard.min.js"></script>
-<script src="Value_at_risk_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="Value_at_risk_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="Value_at_risk_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="Value_at_risk_files/libs/quarto-html/popper.min.js"></script>
-<script src="Value_at_risk_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="Value_at_risk_files/libs/quarto-html/anchor.min.js"></script>
-<link href="Value_at_risk_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="Value_at_risk_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="Value_at_risk_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="Value_at_risk_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="Value_at_risk_files/libs/bootstrap/bootstrap-a74871fe4945b66d259aafc266475145.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="index_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap-a74871fe4945b66d259aafc266475145.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -374,7 +374,7 @@ window.Quarto = {
 </section>
 <section id="data-loading" class="level2">
 <h2 class="anchored" data-anchor-id="data-loading">3.2 Data Loading</h2>
-<div id="2f004d31" class="cell" data-execution_count="1">
+<div id="9516db1d" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -481,7 +481,7 @@ Date
 <p>This saves us the data transformation step and ensures consistency in return calculations.</p>
 </div>
 </div>
-<div id="ee01e1e3" class="cell" data-execution_count="2">
+<div id="ba18415b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Returns summary statistics:"</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(returns.describe())</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -554,7 +554,7 @@ Extreme value check:</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-3-output-2.png" width="1525" height="1141" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-3-output-2.png" width="1525" height="1141" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -590,7 +590,7 @@ Extreme value check:</code></pre>
 <section id="parameter-estimation" class="level2">
 <h2 class="anchored" data-anchor-id="parameter-estimation">4.2 Parameter Estimation</h2>
 <p>We estimate the mean return vector and covariance matrix from the log returns data:</p>
-<div id="cde711c7" class="cell" data-execution_count="3">
+<div id="9aff40f4" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimate mean returns and covariance matrix</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mu <span class="op">=</span> returns.mean()</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>Sigma <span class="op">=</span> returns.cov()</span>
@@ -656,7 +656,7 @@ MJQE -0.003  0.050  0.028  0.028  0.130 -0.009  0.120  0.197  1.000</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-4-output-2.png" width="920" height="758" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-4-output-2.png" width="920" height="758" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -680,7 +680,7 @@ MJQE -0.003  0.050  0.028  0.028  0.130 -0.009  0.120  0.197  1.000</code></pre>
 </div>
 </div>
 <p>We construct the efficient frontier by solving for the minimum-variance portfolio at different target return levels:</p>
-<div id="bd9210a6" class="cell" data-execution_count="4">
+<div id="2bab68d7" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> portfolio_metrics(weights, mu, Sigma):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Calculate portfolio return and volatility"""</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    port_return <span class="op">=</span> weights <span class="op">@</span> mu</span>
@@ -763,7 +763,7 @@ Return range: -0.89% to 16.34% (annualized)</code></pre>
 </section>
 <section id="visualizing-the-efficient-frontier" class="level2">
 <h2 class="anchored" data-anchor-id="visualizing-the-efficient-frontier">4.4 Visualizing the Efficient Frontier</h2>
-<div id="96914292" class="cell" data-execution_count="5">
+<div id="55fdcd2a" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot efficient frontier</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">8</span>))</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -798,7 +798,7 @@ Return range: -0.89% to 16.34% (annualized)</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-6-output-1.png" width="1141" height="756" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-6-output-1.png" width="1141" height="756" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -839,7 +839,7 @@ Return range: -0.89% to 16.34% (annualized)</code></pre>
 <p><strong>Rule of thumb</strong>: If parametric CVaR appears positive or invalid, reduce the percentile to select a more conservative portfolio.</p>
 </div>
 </div>
-<div id="13c4caa4" class="cell" data-execution_count="6">
+<div id="4395679a" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ADJUSTABLE PARAMETER: Change this value between 0.0 and 1.0</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Lower values = more conservative portfolio</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Higher values = more aggressive portfolio</span></span>
@@ -1005,7 +1005,7 @@ PARAMETRIC VAR VALIDITY CHECK
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-7-output-2.png" width="949" height="566" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-7-output-2.png" width="949" height="566" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1022,7 +1022,7 @@ Selected Portfolio                 7.40%          9.52%     0.78</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-7-output-4.png" width="1141" height="756" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-7-output-4.png" width="1141" height="756" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1061,7 +1061,7 @@ Selected Portfolio                 7.40%          9.52%     0.78</code></pre>
 <p>The daily portfolio return is computed as the weighted sum of individual asset returns:</p>
 <p><span class="math display">\[R_P = \sum_{i=1}^{n} w_i r_i = w^\top r\]</span></p>
 <p>where <span class="math inline">\(r\)</span> is the vector of asset returns.</p>
-<div id="728ee74d" class="cell" data-execution_count="7">
+<div id="0b6283f6" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate portfolio returns</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>R_P <span class="op">=</span> returns <span class="op">@</span> optimal_weights</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1106,7 +1106,7 @@ Kurtosis: 11.9356</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-8-output-2.png" width="1333" height="948" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-8-output-2.png" width="1333" height="948" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1215,7 +1215,7 @@ Kurtosis: 11.9356</code></pre>
 <p>This means the portfolio is expected to lose at most about <strong>4.56%</strong> of its value with 99% confidence. If the portfolio value is $1,000,000, the 99% VaR is approximately <strong>$45,600</strong>.</p>
 </div>
 </div>
-<div id="da1f1394" class="cell" data-execution_count="8">
+<div id="97d76a15" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Parametric VaR and CVaR calculation</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parametric_var_cvar(returns, confidence_level<span class="op">=</span><span class="fl">0.95</span>):</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
@@ -1339,7 +1339,7 @@ Confidence Level: 99.0%
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-9-output-2.png" width="1141" height="660" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-9-output-2.png" width="1141" height="660" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1385,7 +1385,7 @@ Confidence Level: 99.0%
 </section>
 <section id="implementation" class="level2">
 <h2 class="anchored" data-anchor-id="implementation">7.2 Implementation</h2>
-<div id="fe67695f" class="cell" data-execution_count="9">
+<div id="12af6259" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> historical_var_cvar(returns, confidence_level<span class="op">=</span><span class="fl">0.95</span>):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Calculate VaR and CVaR using historical simulation</span></span>
@@ -1483,7 +1483,7 @@ Confidence Level: 99.0%
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-10-output-2.png" width="1141" height="660" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-10-output-2.png" width="1141" height="660" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1535,7 +1535,7 @@ dtype: float64</code></pre>
 </section>
 <section id="implementation-1" class="level2">
 <h2 class="anchored" data-anchor-id="implementation-1">8.3 Implementation</h2>
-<div id="25adb9e2" class="cell" data-execution_count="10">
+<div id="2cab6c10" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> monte_carlo_var_cvar(mu, Sigma, weights, n_simulations<span class="op">=</span><span class="dv">100000</span>, confidence_level<span class="op">=</span><span class="fl">0.95</span>):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Calculate VaR and CVaR using Monte Carlo simulation</span></span>
@@ -1664,7 +1664,7 @@ Confidence Level: 99.0%
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-11-output-2.png" width="1525" height="564" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-11-output-2.png" width="1525" height="564" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1687,7 +1687,7 @@ Kurtosis: 0.0060 (vs actual: 11.9356)</code></pre>
 <h1>9. Comparison of Methods</h1>
 <section id="summary-table" class="level2">
 <h2 class="anchored" data-anchor-id="summary-table">9.1 Summary Table</h2>
-<div id="a230e7cd" class="cell" data-execution_count="11">
+<div id="7d49305f" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create comprehensive comparison table</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>comparison_data <span class="op">=</span> []</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1770,7 +1770,7 @@ Confidence Level Parametric VaR (%) Historical VaR (%) Monte Carlo VaR (%) Param
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-12-output-2.png" width="1525" height="564" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-12-output-2.png" width="1525" height="564" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1799,7 +1799,7 @@ Confidence Level Parametric VaR (%) Historical VaR (%) Monte Carlo VaR (%) Param
 <h1>10. Sensitivity Analysis</h1>
 <section id="effect-of-confidence-level" class="level2">
 <h2 class="anchored" data-anchor-id="effect-of-confidence-level">10.1 Effect of Confidence Level</h2>
-<div id="e28fd5d8" class="cell" data-execution_count="12">
+<div id="29670c55" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sensitivity analysis</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>confidence_range <span class="op">=</span> np.arange(<span class="fl">0.85</span>, <span class="fl">1.00</span>, <span class="fl">0.01</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1843,7 +1843,7 @@ Confidence Level Parametric VaR (%) Historical VaR (%) Monte Carlo VaR (%) Param
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-13-output-1.png" width="1141" height="660" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-13-output-1.png" width="1141" height="660" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1899,7 +1899,7 @@ I_t = \begin{cases}
 <p>where <span class="math inline">\(L_t = -R_{P,t}\)</span> is the realized loss and <span class="math inline">\(\widehat{\text{VaR}}_{t,\alpha}\)</span> is the forecasted VaR at confidence level <span class="math inline">\(\alpha\)</span>.</p>
 <p>Under a correct VaR model: <span class="math display">\[\mathbb{P}(I_t = 1) = 1 - \alpha\]</span></p>
 <p>For example, a 95% VaR should be violated approximately 5% of the time, and a 99% VaR should be violated approximately 1% of the time.</p>
-<div id="70161ae4" class="cell" data-execution_count="13">
+<div id="e946e24f" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Helper function to compute violations</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_var_violations(returns, var_forecast):</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
@@ -1988,7 +1988,7 @@ LR_{\text{POF}} = -2 \ln \left[ \frac{(1-\alpha)^x \alpha^{T-x}} {\left(\frac{x}
 </section>
 <section id="implementation-and-results" class="level3">
 <h3 class="anchored" data-anchor-id="implementation-and-results">11.2.2 Implementation and Results</h3>
-<div id="165a9e9c" class="cell" data-execution_count="14">
+<div id="3486f8f9" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kupiec_test(violations, confidence_level, significance<span class="op">=</span><span class="fl">0.05</span>):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Perform Kupiec (Proportion of Failures) test</span></span>
@@ -2275,7 +2275,7 @@ Test Statistics:
 </section>
 <section id="interpretation-2" class="level3">
 <h3 class="anchored" data-anchor-id="interpretation-2">11.2.3 Interpretation</h3>
-<div id="c3269495" class="cell" data-execution_count="15">
+<div id="53a7f461" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> <span class="st">"="</span> <span class="op">*</span> <span class="dv">100</span>)</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"KUPIEC TEST INTERPRETATION"</span>)</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">100</span>)</span>
@@ -2348,7 +2348,7 @@ Monte Carlo    : ✗ FAIL   | Obs:  20 | Exp:  12.2 | Diff:  +7.8 | LR:  4.222 |
 </section>
 <section id="visualization-of-violations" class="level2">
 <h2 class="anchored" data-anchor-id="visualization-of-violations">11.3 Visualization of Violations</h2>
-<div id="3b6fc706" class="cell" data-execution_count="16">
+<div id="aa3a87e2" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize violations over time</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="bu">len</span>(confidence_levels), <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">4</span><span class="op">*</span><span class="bu">len</span>(confidence_levels)))</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2392,7 +2392,7 @@ Monte Carlo    : ✗ FAIL   | Obs:  20 | Exp:  12.2 | Diff:  +7.8 | LR:  4.222 |
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Value_at_risk_files/figure-html/cell-17-output-1.png" width="1333" height="1524" class="figure-img"></p>
+<p><img src="index_files/figure-html/cell-17-output-1.png" width="1333" height="1524" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -2439,7 +2439,7 @@ Monte Carlo    : ✗ FAIL   | Obs:  20 | Exp:  12.2 | Diff:  +7.8 | LR:  4.222 |
 </table>
 </div>
 </div>
-<div id="e45b9a1f" class="cell" data-execution_count="17">
+<div id="85c32917" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Basel Traffic Light Analysis for 99% VaR</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> <span class="st">"="</span> <span class="op">*</span> <span class="dv">80</span>)</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"BASEL TRAFFIC LIGHT ANALYSIS (99% VaR)"</span>)</span>
@@ -2498,7 +2498,7 @@ Results for 99% VaR:
 </section>
 <section id="summary-and-recommendations" class="level2">
 <h2 class="anchored" data-anchor-id="summary-and-recommendations">11.5 Summary and Recommendations</h2>
-<div id="73f69ab6" class="cell" data-execution_count="18">
+<div id="dc29165a" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create comprehensive summary table</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>summary_data <span class="op">=</span> []</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2559,7 +2559,7 @@ Kupiec Test: Checks if violation FREQUENCY matches expected rate
 LR Stat = Likelihood Ratio statistic | p-value: reject if p &lt; 0.05</code></pre>
 </div>
 </div>
-<div id="1c43aebc" class="cell" data-execution_count="19">
+<div id="e0adb155" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Analyze which confidence level works best for each method</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> <span class="st">"="</span> <span class="op">*</span> <span class="dv">100</span>)</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"CONFIDENCE LEVEL RECOMMENDATION ANALYSIS"</span>)</span>
@@ -2623,7 +2623,7 @@ MONTE CARLO METHOD:
   → RECOMMENDED CONFIDENCE LEVELS: ['97.5%']</code></pre>
 </div>
 </div>
-<div id="2cdc244f" class="cell" data-execution_count="20">
+<div id="423beb92" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count passes for each method</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> <span class="st">"="</span> <span class="op">*</span> <span class="dv">100</span>)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"METHOD COMPARISON: TOTAL PASSES"</span>)</span>
