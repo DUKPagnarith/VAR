@@ -1,0 +1,1822 @@
+---
+title: "Portfolio Risk Measurement Using Value-at-Risk and Conditional Value-at-Risk"
+subtitle: "Efficient Frontier Optimization, Comparative Risk Analysis, and VaR Backtesting"
+author: "Duk Pagnarith"
+date: "December 31, 2025"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: false
+    theme: cosmo
+    fig-width: 10
+    fig-height: 6
+execute:
+  warning: false
+  message: false
+  freeze: auto
+---
+
+# 1. Introduction
+
+::: {.callout-note icon=false}
+## 📊 Understanding Risk in Modern Finance
+
+Risk is the fundamental uncertainty associated with future investment outcomes. In portfolio management, risk represents the potential deviation of actual returns from expected returns, with particular concern for adverse outcomes that result in financial losses.
+:::
+
+## 1.1 Risk in Portfolio Management
+
+Risk is the fundamental uncertainty associated with future investment outcomes. In portfolio management, risk represents the potential deviation of actual returns from expected returns, with particular concern for adverse outcomes that result in financial losses. Unlike simple volatility measures that treat upside and downside deviations equally, modern risk management focuses on downside risk—the probability and magnitude of losses below a certain threshold.
+
+::: {.callout-important}
+## Why Variance Is Not Enough
+
+Traditional portfolio theory, pioneered by Markowitz, uses variance as a symmetric risk measure. However, variance fails to distinguish between gains and losses, treating both as equally undesirable deviations. In practice, investors are primarily concerned with **losses, not gains**. This asymmetric perspective motivates the use of downside risk measures such as VaR and CVaR.
+:::
+
+## 1.2 Value-at-Risk (VaR)
+
+::: {.callout-tip}
+## 💡 What is VaR?
+
+Value-at-Risk answers a simple but powerful question: **"What is the maximum loss we can expect with a given confidence level?"**
+
+For example, a 99% VaR of $1,000 means there is only a 1% chance that the portfolio will lose more than $1,000.
+:::
+
+Value-at-Risk is a quantile-based risk measure that estimates the maximum expected loss over a given confidence level. If $R_P$ denotes portfolio return and $L_P = -R_P$ the loss, then the VaR at confidence level $\alpha$ is formally defined as:
+
+$$\text{VaR}_\alpha = \inf\{l: P(L_P > l) \leq 1-\alpha\}$$
+
+For example, a one-day 99% VaR of $1,000 means there is only a 1% chance that the portfolio will lose more than $1,000 in one day. VaR has become the industry standard for risk reporting, mandated by regulatory frameworks such as Basel III for banks.
+
+## 1.3 Conditional Value-at-Risk (CVaR)
+
+::: {.callout-warning}
+## ⚠️ VaR's Limitation: The Tail Beyond the Threshold
+
+While VaR provides a threshold for losses, it does not describe the magnitude of losses **beyond** that threshold. This is where CVaR becomes critical.
+
+**CVaR measures the expected loss given that losses exceed the VaR threshold**, providing crucial information about extreme tail events.
+:::
+
+Conditional Value-at-Risk, also known as Expected Shortfall, addresses VaR's limitation by measuring the expected loss given that losses exceed the VaR threshold:
+
+$$\text{CVaR}_\alpha = \mathbb{E}[L_P \mid L_P > \text{VaR}_\alpha]$$
+
+CVaR is superior to VaR in several respects: it is a coherent risk measure (satisfying subadditivity), it is more sensitive to tail risk, and it provides information about the severity of extreme losses. CVaR is increasingly preferred in optimization and risk management applications.
+
+## 1.4 Methodological Approaches
+
+::: {.callout-note}
+## 🔬 Three Approaches to Measuring Risk
+
+This project employs three distinct methodologies, each with different assumptions and trade-offs:
+
+1. **Parametric Method** - Fast but assumes normality
+2. **Historical Simulation** - Non-parametric but backward-looking
+3. **Monte Carlo Simulation** - Flexible but computationally intensive
+:::
+
+This project employs three distinct approaches to estimate VaR and CVaR:
+
+**Parametric (Variance-Covariance) Method:** Assumes portfolio returns follow a normal distribution with parameters estimated from historical data. VaR and CVaR are computed analytically using the mean and standard deviation of returns. This method is computationally efficient but relies heavily on the normality assumption, which often fails during market stress.
+
+**Historical Simulation:** Uses the empirical distribution of historical returns without imposing distributional assumptions. VaR is the empirical quantile, and CVaR is the average of losses beyond VaR. This method is non-parametric and captures actual historical patterns, but it assumes the future will resemble the past and is limited by available data.
+
+**Monte Carlo Simulation:** Generates synthetic return scenarios by sampling from a multivariate normal distribution calibrated to historical mean and covariance. This method explicitly models correlations between assets and can incorporate complex dependencies, but it still assumes normality and requires careful calibration.
+
+# 2. Project Objectives
+
+::: {.callout-important icon=false}
+## 🎯 Primary Research Objectives
+
+The primary objectives of this project are:
+
+1. **Construct an efficient frontier** using mean-variance optimization to visualize the risk-return tradeoff and identify optimal portfolios
+
+2. **Select a balanced portfolio** from the efficient frontier with reasonable expected return and acceptable risk level
+
+3. **Measure portfolio risk** using Value-at-Risk and Conditional Value-at-Risk under multiple confidence levels (90%, 95%, 97.5%, and 99%)
+
+4. **Compare methodological approaches** by implementing parametric, historical simulation, and Monte Carlo methods to understand how distributional assumptions affect risk estimates
+
+5. **Validate VaR models through backtesting** using the Kupiec test to assess model accuracy and calibration
+
+6. **Analyze the role of correlation** in portfolio risk by examining how asset dependencies influence tail risk under different methodologies
+
+7. **Provide practical insights** for risk management by interpreting results in economic terms and discussing the implications for portfolio decision-making
+:::
+
+# 3. Data Collection and Preprocessing
+
+## 3.1 Data Source and Stock Selection
+
+This project uses daily log returns data for nine stocks. The selected stocks represent companies from the Stock Exchange of Cambodia:
+
+1. PWSA:	Phnom Penh Water Supply Authority	(First company listed on CSX in 2012)
+
+2. ABC:	ACLEDA Bank Plc	(Cambodian bank)
+
+3. GTI:	Grand Twins International (Cambodia) Plc	(Garment manufacturer)
+
+4. PAS:	Sihanoukville Autonomous Port	(Port operator)
+
+5. PEPC:	PESTECH (Cambodia) Plc	(Power & electrical infrastructure)
+
+6. PPAP:	Phnom Penh Autonomous Port	(Port operator)
+
+7. PPSP:	Phnom Penh Special Economic Zone Plc	(SEZ developer/operator)
+
+8. CGSM:	CAMGSM Plc (Cellcard)	(Cambodian telecom operator)
+
+9. MJQE:	Mengly J. Quach Education Plc
+
+The data contains pre-calculated daily log returns, eliminating the need for price-to-return transformation.
+
+## 3.2 Data Loading
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.optimize import minimize
+
+# Define stock tickers
+tickers = ['PWSA', 'ABC', 'GTI', 'PAS', 'PEPC', 'PPAP', 'PPSP', 'CGSM', 'MJQE']
+
+# Load log returns data from CSV
+returns = pd.read_csv('Log_return.csv', index_col=0, parse_dates=True)
+
+# Sort by date (oldest to newest)
+returns = returns.sort_index()
+
+# Ensure all columns are numeric and handle any missing data
+returns = returns.apply(pd.to_numeric, errors='coerce')
+
+# Drop any rows with NaN values
+initial_rows = len(returns)
+returns = returns.dropna()
+dropped_rows = initial_rows - len(returns)
+
+if dropped_rows > 0:
+    print(f"Warning: Dropped {dropped_rows} rows with missing data")
+
+print(f"Loaded {len(returns)} days of log return data")
+print(f"Date range: {returns.index[0].date()} to {returns.index[-1].date()}")
+print(f"\nData shape: {returns.shape}")
+print(f"Columns in data: {list(returns.columns)}")
+
+# Verify all expected tickers are present
+missing_tickers = [t for t in tickers if t not in returns.columns]
+if missing_tickers:
+    print(f"\nWarning: Missing tickers: {missing_tickers}")
+    print("Available columns:", list(returns.columns))
+    # Use only available tickers
+    tickers = [t for t in tickers if t in returns.columns]
+    returns = returns[tickers]
+    print(f"Proceeding with {len(tickers)} stocks: {tickers}")
+
+print(f"\nFirst few rows:")
+print(returns.head())
+
+print(f"\nLast few rows:")
+print(returns.tail())
+```
+
+## 3.3 Data Summary and Validation
+
+::: {.callout-tip}
+## 📐 Log-Returns Already Calculated
+
+The data comes pre-calculated as log-returns:
+$$r_{i,t} = \ln\left(\frac{P_{i,t}}{P_{i,t-1}}\right)$$
+
+This saves us the data transformation step and ensures consistency in return calculations.
+:::
+
+```{python}
+print(f"\nReturns summary statistics:")
+print(returns.describe())
+
+# Check for any infinite or extreme values
+print(f"\nData quality checks:")
+# Convert to numpy array first, then check
+returns_array = returns.values.astype(float)
+print(f"Any infinite values: {np.isinf(returns_array).any()}")
+print(f"Any NaN values: {returns.isnull().any().any()}")
+print(f"Value range: [{returns.min().min():.6f}, {returns.max().max():.6f}]")
+
+# Check for extreme values
+print(f"\nExtreme value check:")
+for col in returns.columns:
+    col_min = returns[col].min()
+    col_max = returns[col].max()
+    if abs(col_min) > 0.15 or abs(col_max) > 0.15:
+        print(f"  {col}: Large values detected (min={col_min:.4f}, max={col_max:.4f})")
+
+# Plot returns for all stocks
+fig, axes = plt.subplots(3, 3, figsize=(16, 12))
+axes = axes.flatten()
+
+for idx, stock in enumerate(tickers):
+    if idx < len(axes):
+        ax = axes[idx]
+        returns[stock].plot(ax=ax, alpha=0.7, linewidth=0.8)
+        ax.set_title(f'{stock} Daily Log Returns')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Log Return')
+        ax.grid(True, alpha=0.3)
+        ax.axhline(y=0, color='r', linestyle='--', alpha=0.5)
+
+# Hide any unused subplots
+for idx in range(len(tickers), len(axes)):
+    axes[idx].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+```
+
+# 4. Portfolio Construction via Efficient Frontier
+
+## 4.1 Modern Portfolio Theory and the Efficient Frontier
+
+::: {.callout-note icon=false}
+## 📈 The Efficient Frontier Concept
+
+The **efficient frontier** represents the set of portfolios that offer the **maximum expected return for a given level of risk** (or minimum risk for a given return level).
+
+**Key Insight:** No rational investor should hold a portfolio below the efficient frontier—such portfolios are dominated by efficient portfolios offering either:
+- Higher return for the same risk, or
+- Lower risk for the same return
+:::
+
+Modern Portfolio Theory, developed by Harry Markowitz, recognizes that portfolio risk depends not only on individual asset volatilities but also on correlations between assets. By combining assets with less-than-perfect correlation, investors can reduce portfolio variance without sacrificing expected return.
+
+The expected return of a portfolio with weights $w$ is:
+
+$$\mu_P = w^\top \mu$$
+
+where $\mu$ is the vector of expected returns. The portfolio variance is:
+
+$$\sigma_P^2 = w^\top \Sigma w$$
+
+where $\Sigma$ is the covariance matrix of returns.
+
+The efficient frontier is the upper boundary of the feasible region in mean-variance space, representing portfolios that maximize return for each level of risk.
+
+## 4.2 Parameter Estimation
+
+We estimate the mean return vector and covariance matrix from the log returns data:
+
+```{python}
+# Estimate mean returns and covariance matrix
+mu = returns.mean()
+Sigma = returns.cov()
+
+print("Estimated annual expected returns (%):")
+print((mu * 252 * 100).round(2))
+
+print("\nDaily statistics:")
+print(f"Mean daily return range: [{mu.min()*100:.4f}%, {mu.max()*100:.4f}%]")
+print(f"Daily volatility range: [{returns.std().min()*100:.4f}%, {returns.std().max()*100:.4f}%]")
+
+print("\nCorrelation matrix:")
+correlation = returns.corr()
+print(correlation.round(3))
+
+# Visualize correlation matrix
+fig, ax = plt.subplots(figsize=(10, 8))
+im = ax.imshow(correlation, cmap='RdBu_r', aspect='auto', vmin=-1, vmax=1)
+ax.set_xticks(range(len(tickers)))
+ax.set_yticks(range(len(tickers)))
+ax.set_xticklabels(tickers, rotation=45)
+ax.set_yticklabels(tickers)
+
+# Add correlation values
+for i in range(len(tickers)):
+    for j in range(len(tickers)):
+        text = ax.text(j, i, f'{correlation.iloc[i, j]:.2f}',
+                      ha="center", va="center", color="black", fontsize=9)
+
+plt.colorbar(im, ax=ax, label='Correlation')
+plt.title('Asset Correlation Matrix')
+plt.tight_layout()
+plt.show()
+```
+
+## 4.3 Efficient Frontier Construction
+
+::: {.callout-tip}
+## 🎯 Building the Efficient Frontier
+
+To construct the efficient frontier, we solve a series of optimization problems:
+
+$$\min_w \quad w^\top \Sigma w$$
+$$\text{subject to} \quad w^\top \mu = \mu_{\text{target}}, \quad \sum_{i=1}^{n} w_i = 1, \quad w_i \geq 0$$
+
+By varying $\mu_{\text{target}}$ from minimum to maximum feasible return, we trace out the entire efficient frontier.
+:::
+
+We construct the efficient frontier by solving for the minimum-variance portfolio at different target return levels:
+
+```{python}
+def portfolio_metrics(weights, mu, Sigma):
+    """Calculate portfolio return and volatility"""
+    port_return = weights @ mu
+    port_volatility = np.sqrt(weights @ Sigma @ weights)
+    return port_return, port_volatility
+
+def optimize_for_return(target_return, mu, Sigma):
+    """Find minimum variance portfolio for a target return"""
+    n_assets = len(mu)
+    
+    # Initial guess
+    w0 = np.ones(n_assets) / n_assets
+    
+    # Constraints
+    constraints = [
+        {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},  # weights sum to 1
+        {'type': 'eq', 'fun': lambda w: w @ mu - target_return}  # target return
+    ]
+    
+    # Bounds: long only
+    bounds = tuple((0, 1) for _ in range(n_assets))
+    
+    # Objective: minimize variance
+    def portfolio_variance(w):
+        return w @ Sigma @ w
+    
+    result = minimize(
+        portfolio_variance,
+        w0,
+        method='SLSQP',
+        bounds=bounds,
+        constraints=constraints,
+        options={'ftol': 1e-9, 'maxiter': 1000}
+    )
+    
+    return result
+
+# Find minimum and maximum returns
+min_var_result = minimize(
+    lambda w: w @ Sigma @ w,
+    np.ones(len(mu)) / len(mu),
+    method='SLSQP',
+    bounds=tuple((0, 1) for _ in range(len(mu))),
+    constraints={'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
+    options={'ftol': 1e-9}
+)
+
+min_return = min_var_result.x @ mu
+max_return = mu.max()
+
+# Generate efficient frontier
+n_portfolios = 100
+target_returns = np.linspace(min_return, max_return * 0.95, n_portfolios)
+efficient_portfolios = []
+
+for target_ret in target_returns:
+    result = optimize_for_return(target_ret, mu.values, Sigma.values)
+    if result.success:
+        ret, vol = portfolio_metrics(result.x, mu.values, Sigma.values)
+        efficient_portfolios.append({
+            'return': ret,
+            'volatility': vol,
+            'weights': result.x
+        })
+
+# Convert to DataFrame
+frontier_df = pd.DataFrame([{
+    'return': p['return'],
+    'volatility': p['volatility']
+} for p in efficient_portfolios])
+
+print(f"\nEfficient Frontier constructed with {len(efficient_portfolios)} portfolios")
+print(f"Return range: {min_return*252*100:.2f}% to {max_return*252*100:.2f}% (annualized)")
+```
+
+## 4.4 Visualizing the Efficient Frontier
+
+```{python}
+# Plot efficient frontier
+fig, ax = plt.subplots(figsize=(12, 8))
+
+# Plot efficient frontier
+ax.plot(frontier_df['volatility'] * np.sqrt(252) * 100, 
+        frontier_df['return'] * 252 * 100,
+        'b-', linewidth=3, label='Efficient Frontier')
+
+# Plot individual assets
+for i, ticker in enumerate(tickers):
+    asset_vol = np.sqrt(Sigma.iloc[i, i]) * np.sqrt(252) * 100
+    asset_ret = mu.iloc[i] * 252 * 100
+    ax.scatter(asset_vol, asset_ret, s=100, alpha=0.6, edgecolors='black', linewidth=1.5)
+    ax.annotate(ticker, (asset_vol, asset_ret), 
+                xytext=(5, 5), textcoords='offset points', fontsize=9)
+
+# Mark minimum variance portfolio
+min_var_port = efficient_portfolios[0]
+ax.scatter(min_var_port['volatility'] * np.sqrt(252) * 100,
+           min_var_port['return'] * 252 * 100,
+           s=300, c='green', marker='*', edgecolors='black', linewidth=2,
+           label='Minimum Variance', zorder=5)
+
+ax.set_xlabel('Annualized Volatility (%)')
+ax.set_ylabel('Annualized Expected Return (%)')
+ax.set_title('Efficient Frontier and Individual Assets')
+ax.legend(loc='best')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## 4.5 Selecting an Optimal Portfolio
+
+::: {.callout-important}
+## 🎲 Portfolio Selection Strategy
+
+We select a portfolio from the efficient frontier that balances risk and return. Rather than choosing the minimum-variance portfolio (too conservative) or maximum-return portfolio (too risky), we select a portfolio with:
+
+- **Moderate expected return**: Adjustable to ensure valid VaR/CVaR estimates
+- **Acceptable volatility**: Offering meaningful diversification benefits
+- **Balanced risk profile**: Suitable for a moderately risk-averse investor
+
+**Important**: If expected return is too high relative to volatility, the parametric VaR/CVaR may become negative (invalid). Adjust the selection to find a portfolio with reasonable risk metrics.
+:::
+
+::: {.callout-tip}
+## 🎛️ Adjustable Portfolio Selection
+
+You can adjust the target return percentile below. Lower values (e.g., 30-40%) select more conservative portfolios with lower expected returns, which helps ensure valid parametric VaR/CVaR estimates. Higher values (e.g., 60-80%) select more aggressive portfolios with higher expected returns.
+
+**Rule of thumb**: If parametric CVaR appears positive or invalid, reduce the percentile to select a more conservative portfolio.
+:::
+
+```{python}
+# ADJUSTABLE PARAMETER: Change this value between 0.0 and 1.0
+# Lower values = more conservative portfolio
+# Higher values = more aggressive portfolio
+PORTFOLIO_SELECTION_PERCENTILE = 0.5 # Start with 50th percentile
+
+# Select portfolio based on percentile
+selection_index = int(len(efficient_portfolios) * PORTFOLIO_SELECTION_PERCENTILE)
+selection_index = max(0, min(selection_index, len(efficient_portfolios) - 1))  # Ensure valid index
+selected_portfolio = efficient_portfolios[selection_index]
+optimal_weights = selected_portfolio['weights']
+
+print(f"\nPORTFOLIO SELECTION")
+print("=" * 60)
+print(f"Selection percentile: {PORTFOLIO_SELECTION_PERCENTILE*100:.0f}%")
+print(f"Portfolio index: {selection_index} of {len(efficient_portfolios)}")
+
+# Display portfolio composition
+portfolio_composition = pd.DataFrame({
+    'Stock': tickers,
+    'Weight (%)': (optimal_weights * 100).round(2)
+}).sort_values('Weight (%)', ascending=False)
+
+print("\nSELECTED PORTFOLIO COMPOSITION")
+print("=" * 60)
+print(portfolio_composition.to_string(index=False))
+
+# Calculate portfolio statistics
+mu_P = optimal_weights @ mu.values
+sigma_P = np.sqrt(optimal_weights @ Sigma.values @ optimal_weights)
+
+print(f"\nPORTFOLIO STATISTICS")
+print("=" * 60)
+print(f"Expected Return (daily): {mu_P:.6f}")
+print(f"Expected Return (annualized): {mu_P * 252 * 100:.2f}%")
+print(f"Volatility (daily): {sigma_P:.6f}")
+print(f"Volatility (annualized): {sigma_P * np.sqrt(252) * 100:.2f}%")
+print(f"Sharpe Ratio (assuming Rf=0): {(mu_P / sigma_P) * np.sqrt(252):.2f}")
+
+# Check if parametric VaR will be valid
+z_95 = stats.norm.ppf(0.05)
+z_99 = stats.norm.ppf(0.01)
+parametric_var_95_preview = -(mu_P + z_95 * sigma_P)
+parametric_var_99_preview = -(mu_P + z_99 * sigma_P)
+
+print(f"\nPARAMETRIC VAR VALIDITY CHECK")
+print("=" * 60)
+if parametric_var_95_preview > 0 and parametric_var_99_preview > 0:
+    print("✓ Parametric VaR/CVaR will be VALID (positive)")
+    print(f"  95% VaR preview: {parametric_var_95_preview*100:.4f}%")
+    print(f"  99% VaR preview: {parametric_var_99_preview*100:.4f}%")
+else:
+    print("✗ WARNING: Parametric VaR/CVaR may be INVALID (negative)")
+    print(f"  95% VaR preview: {parametric_var_95_preview*100:.4f}%")
+    print(f"  99% VaR preview: {parametric_var_99_preview*100:.4f}%")
+    print("\n  RECOMMENDATION: Reduce PORTFOLIO_SELECTION_PERCENTILE")
+    print("  Try values like 0.20, 0.30, or 0.40 for more conservative portfolio")
+
+# Visualize portfolio weights
+fig, ax = plt.subplots(figsize=(10, 6))
+colors = plt.cm.Set3(range(len(tickers)))
+sorted_indices = portfolio_composition.index
+ax.bar(range(len(tickers)), 
+       portfolio_composition['Weight (%)'].values, 
+       color=[colors[i] for i in sorted_indices], 
+       edgecolor='black')
+ax.set_xticks(range(len(tickers)))
+ax.set_xticklabels(portfolio_composition['Stock'].values, rotation=45)
+ax.set_ylabel('Weight (%)')
+ax.set_title(f'Selected Portfolio Weights (Percentile: {PORTFOLIO_SELECTION_PERCENTILE*100:.0f}%)')
+ax.grid(axis='y', alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# Compare to equal-weight and min-variance portfolios
+equal_weights = np.ones(len(tickers)) / len(tickers)
+equal_return = equal_weights @ mu.values
+equal_volatility = np.sqrt(equal_weights @ Sigma.values @ equal_weights)
+
+min_var_return = min_var_port['return']
+min_var_volatility = min_var_port['volatility']
+
+print(f"\nCOMPARISON WITH OTHER STRATEGIES")
+print("=" * 60)
+print(f"{'Strategy':<25} {'Return (ann.)':<15} {'Vol (ann.)':<15} {'Sharpe':<10}")
+print("-" * 60)
+print(f"{'Equal-Weight':<25} {equal_return*252*100:>13.2f}% {equal_volatility*np.sqrt(252)*100:>13.2f}% {(equal_return/equal_volatility)*np.sqrt(252):>8.2f}")
+print(f"{'Minimum Variance':<25} {min_var_return*252*100:>13.2f}% {min_var_volatility*np.sqrt(252)*100:>13.2f}% {(min_var_return/min_var_volatility)*np.sqrt(252):>8.2f}")
+print(f"{'Selected Portfolio':<25} {mu_P*252*100:>13.2f}% {sigma_P*np.sqrt(252)*100:>13.2f}% {(mu_P/sigma_P)*np.sqrt(252):>8.2f}")
+
+# Add selected portfolio to frontier plot
+fig, ax = plt.subplots(figsize=(12, 8))
+
+ax.plot(frontier_df['volatility'] * np.sqrt(252) * 100, 
+        frontier_df['return'] * 252 * 100,
+        'b-', linewidth=3, label='Efficient Frontier')
+
+# Individual assets
+for i, ticker in enumerate(tickers):
+    asset_vol = np.sqrt(Sigma.iloc[i, i]) * np.sqrt(252) * 100
+    asset_ret = mu.iloc[i] * 252 * 100
+    ax.scatter(asset_vol, asset_ret, s=100, alpha=0.6, edgecolors='black', linewidth=1.5)
+    ax.annotate(ticker, (asset_vol, asset_ret), 
+                xytext=(5, 5), textcoords='offset points', fontsize=9)
+
+# Mark special portfolios
+ax.scatter(min_var_volatility * np.sqrt(252) * 100,
+           min_var_return * 252 * 100,
+           s=300, c='green', marker='*', edgecolors='black', linewidth=2,
+           label='Minimum Variance', zorder=5)
+
+ax.scatter(sigma_P * np.sqrt(252) * 100,
+           mu_P * 252 * 100,
+           s=400, c='red', marker='D', edgecolors='black', linewidth=2,
+           label=f'Selected Portfolio ({PORTFOLIO_SELECTION_PERCENTILE*100:.0f}%)', zorder=5)
+
+ax.scatter(equal_volatility * np.sqrt(252) * 100,
+           equal_return * 252 * 100,
+           s=200, c='orange', marker='s', edgecolors='black', linewidth=2,
+           label='Equal-Weight', zorder=5)
+
+ax.set_xlabel('Annualized Volatility (%)')
+ax.set_ylabel('Annualized Expected Return (%)')
+ax.set_title('Efficient Frontier with Selected Portfolio')
+ax.legend(loc='best')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## 4.6 Interpretation of Portfolio Selection
+
+::: {.callout-note}
+## 💡 Why This Portfolio?
+
+The selected portfolio offers:
+
+1. **Balanced return** based on your selected percentile
+2. **Better risk-adjusted performance** compared to naive strategies
+3. **Moderate volatility** - not chasing maximum returns
+4. **Diversification across sectors** with meaningful allocations
+5. **Valid risk metrics** - ensures parametric VaR/CVaR calculations are meaningful
+
+**Adjusting the Selection**: 
+- **Lower percentile (20-40%)**: More conservative, lower returns, valid VaR/CVaR
+- **Higher percentile (60-80%)**: More aggressive, higher returns, may have invalid parametric VaR/CVaR
+:::
+
+The selected portfolio strikes a balance between risk and return based on the chosen percentile. Lower percentile selections prioritize risk minimization and ensure valid parametric risk estimates, while higher percentiles chase returns but may encounter issues with the normality assumption in VaR calculations.
+
+# 5. Portfolio Return Computation
+
+## 5.1 Daily Portfolio Returns
+
+The daily portfolio return is computed as the weighted sum of individual asset returns:
+
+$$R_P = \sum_{i=1}^{n} w_i r_i = w^\top r$$
+
+where $r$ is the vector of asset returns.
+
+```{python}
+# Calculate portfolio returns
+R_P = returns @ optimal_weights
+
+print(f"PORTFOLIO RETURNS STATISTICS")
+print("=" * 60)
+print(f"Mean daily return: {R_P.mean():.6f}")
+print(f"Daily volatility: {R_P.std():.6f}")
+print(f"Skewness: {R_P.skew():.4f}")
+print(f"Kurtosis: {R_P.kurtosis():.4f}")
+
+# Plot portfolio returns
+fig, axes = plt.subplots(2, 1, figsize=(14, 10))
+
+# Time series plot
+axes[0].plot(R_P.index, R_P, alpha=0.6, linewidth=0.8)
+axes[0].axhline(y=0, color='red', linestyle='--', alpha=0.5)
+axes[0].set_title('Portfolio Daily Returns Over Time')
+axes[0].set_xlabel('Date')
+axes[0].set_ylabel('Log Return')
+axes[0].grid(True, alpha=0.3)
+
+# Distribution plot
+axes[1].hist(R_P, bins=100, alpha=0.7, color='steelblue', edgecolor='black')
+axes[1].axvline(x=R_P.mean(), color='red', linestyle='--', 
+                linewidth=2, label=f'Mean = {R_P.mean():.6f}')
+axes[1].set_title('Distribution of Portfolio Returns')
+axes[1].set_xlabel('Log Return')
+axes[1].set_ylabel('Frequency')
+axes[1].legend()
+axes[1].grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## 5.2 Return Distribution Characteristics
+
+::: {.callout-warning}
+## 📉 Key Observations from Portfolio Returns
+
+1. **Volatility Clustering**: Periods of high volatility tend to be followed by high volatility, and calm periods persist
+2. **Fat Tails**: The distribution shows higher probability of extreme outcomes compared to normal distribution
+3. **Negative Skewness**: More extreme losses than gains—a common feature of equity returns
+4. **Excess Kurtosis**: Positive kurtosis indicates fat tails and more peaked distribution than normal
+
+These characteristics violate the constant-variance and normality assumptions of the parametric method.
+:::
+
+The time series plot reveals clustering of volatility—periods of high volatility tend to be followed by high volatility, and calm periods persist. This heteroskedasticity violates the constant-variance assumption of the parametric method. The distribution histogram shows fat tails compared to a normal distribution, indicating higher probability of extreme outcomes. Negative skewness suggests asymmetry with more extreme losses than gains, while excess kurtosis confirms the fat-tailed nature of returns.
+
+# 6. Parametric (Variance-Covariance) VaR and CVaR
+
+## 6.1 Normality Assumption
+
+::: {.callout-note icon=false}
+## 📊 Parametric Approach: Normal Distribution Assumption
+
+Under the parametric approach, portfolio returns are assumed to follow a normal distribution and portfolio losses $L_P = -R_P$ follow:
+
+$$R_P \sim \mathcal{N}(-\mu_P, \sigma_P^2)$$
+
+where $\mu_P$ and $\sigma_P$ represent the empirical mean and standard deviation of daily portfolio returns estimated from historical data.
+:::
+
+The parametric method assumes portfolio returns follow a normal distribution. Under this assumption, we can compute VaR analytically using quantiles of the standard normal distribution.
+
+## 6.2 VaR Calculation
+
+::: {.callout-important}
+## 📉 Value-at-Risk Definition
+
+Risk is measured in terms of portfolio **losses**, defined as $L_P = -R_P$. Value-at-Risk (VaR) at confidence level $\alpha$ is the loss threshold that is exceeded with probability $1-\alpha$.
+
+Using the normal distribution, VaR can be expressed analytically as:
+
+$$\text{VaR}_\alpha = -(\mu_P + z_{1-\alpha} \sigma_P)$$
+
+where $z_{1-\alpha} = \Phi^{-1}(1-\alpha)$ denotes the lower-tail quantile of the standard normal distribution.
+
+**Interpretation**: VaR represents the worst expected loss under normal market conditions, excluding extreme tail events.
+:::
+
+For 95% confidence, $z_{0.05} = \Phi^{-1}(0.05) \approx -1.645$, and for 99% confidence, $z_{0.01} = \Phi^{-1}(0.01) \approx -2.326$.
+
+## 6.3 CVaR Calculation
+
+::: {.callout-warning}
+## 📊 Conditional Value-at-Risk (Expected Shortfall)
+
+While VaR provides a quantile-based measure of downside risk, it does not convey information about the magnitude of losses **beyond** the VaR threshold. To address this limitation, Conditional Value-at-Risk (CVaR), also known as Expected Shortfall, is employed.
+
+CVaR measures the **expected loss given that the loss exceeds the VaR level**. For normally distributed returns, CVaR admits a closed-form expression:
+
+$$\text{CVaR}_\alpha = -\left(\mu_P - \frac{\sigma_P \cdot \phi(z_{1-\alpha})}{1-\alpha}\right)$$
+
+where $\phi(\cdot)$ denotes the standard normal probability density function.
+
+**Key Insight**: Since CVaR averages losses in the tail of the distribution, it is **always greater than VaR** and provides a more conservative assessment of downside risk.
+:::
+
+## 6.4 Example Calculation
+
+::: {.callout-tip}
+## 📐 Numerical Example
+
+Consider a portfolio with daily returns approximately normally distributed with mean 0.1% and standard deviation 2%. For a 99% confidence level:
+
+$$\text{VaR}_{0.99} = -(\mu_P - z_{0.99}\sigma_P) = -(0.001 - 2.33 \times 0.02) = 0.0456$$
+
+This means the portfolio is expected to lose at most about **4.56%** of its value with 99% confidence. If the portfolio value is $1,000,000, the 99% VaR is approximately **$45,600**.
+:::
+
+```{python}
+# Parametric VaR and CVaR calculation
+def parametric_var_cvar(returns, confidence_level=0.95):
+    """
+    Calculate VaR and CVaR assuming normal distribution.
+    
+    Parameters:
+    -----------
+    returns : array-like
+        Daily portfolio returns
+    confidence_level : float
+        Confidence level (e.g., 0.95 for 95%)
+    
+    Returns:
+    --------
+    var : float
+        Value-at-Risk (positive loss magnitude)
+    cvar : float
+        Conditional Value-at-Risk (positive loss magnitude)
+    """
+    # Daily statistics
+    mu_P = returns.mean()
+    sigma_P = returns.std()
+    
+    # Lower-tail quantile of standard normal
+    z_alpha = stats.norm.ppf(1 - confidence_level)
+    
+    # PDF at z_alpha
+    phi_z = stats.norm.pdf(z_alpha)
+    
+    # VaR: worst expected loss at confidence level
+    # VaR = -(mu_P + z_alpha * sigma_P)
+    var = -(mu_P + z_alpha * sigma_P)
+    
+    # CVaR: expected loss beyond VaR threshold
+    # CVaR = -(mu_P - (sigma_P * phi(z_alpha)) / (1 - alpha))
+    cvar = -(mu_P - (sigma_P * phi_z) / (1 - confidence_level))
+    
+    return var, cvar
+
+# Calculate parametric VaR and CVaR at different confidence levels
+# Using multiple confidence levels for comprehensive backtesting
+confidence_levels = [0.90, 0.95, 0.975, 0.99]
+
+print("\nPARAMETRIC (VARIANCE-COVARIANCE) METHOD")
+print("=" * 60)
+print("Testing at multiple confidence levels: 90%, 95%, 97.5%, 99%")
+
+parametric_results = {}
+for cl in confidence_levels:
+    var, cvar = parametric_var_cvar(R_P, cl)
+    parametric_results[cl] = {'VaR': var, 'CVaR': cvar}
+    
+    print(f"\nConfidence Level: {cl*100:.1f}%")
+    print(f"  VaR:  {var*100:.4f}% (${var*1000000:,.2f} on $1M portfolio)")
+    print(f"  CVaR: {cvar*100:.4f}% (${cvar*1000000:,.2f} on $1M portfolio)")
+    
+    # Validity check
+    if var > 0 and cvar > 0:
+        print(f"  ✓ Valid risk measures (positive losses)")
+    else:
+        print(f"  ✗ WARNING: Invalid risk measures (negative values)")
+        print(f"     This indicates expected return is too high relative to volatility")
+
+# Visualize parametric VaR
+fig, ax = plt.subplots(figsize=(12, 7))
+
+# Plot return distribution
+x = np.linspace(R_P.min(), R_P.max(), 1000)
+pdf = stats.norm.pdf(x, R_P.mean(), R_P.std())
+ax.plot(x, pdf, 'b-', linewidth=2, label='Normal Distribution (fitted)')
+
+# Add histogram
+ax.hist(R_P, bins=100, density=True, alpha=0.3, 
+        color='gray', edgecolor='black', label='Actual Returns')
+
+# Mark VaR and CVaR levels
+colors = ['green', 'orange', 'darkorange', 'red']
+for cl, color in zip(confidence_levels, colors):
+    var = parametric_results[cl]['VaR']
+    cvar = parametric_results[cl]['CVaR']
+    
+    # Plot at negative return positions (loss region)
+    ax.axvline(-var, color=color, linestyle='--', linewidth=2, 
+               label=f'VaR {cl*100:.1f}% = {var*100:.3f}%')
+    ax.axvline(-cvar, color=color, linestyle=':', linewidth=2, 
+               label=f'CVaR {cl*100:.1f}% = {cvar*100:.3f}%')
+
+ax.set_xlabel('Portfolio Return')
+ax.set_ylabel('Density')
+ax.set_title('Parametric VaR and CVaR (Normal Distribution Assumption)')
+ax.legend(loc='upper right', fontsize=8, ncol=2)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+## 6.5 Economic Interpretation
+
+::: {.callout-note icon=false}
+## 💰 What Do These Numbers Mean?
+
+**For a $1 million portfolio:**
+
+- **90% VaR**: The worst expected daily loss under normal conditions (exceeded only 10% of the time)
+- **95% VaR**: The worst expected daily loss under normal conditions (exceeded only 5% of the time)
+- **99% VaR**: The worst expected daily loss in extreme scenarios (exceeded only 1% of the time)
+- **CVaR**: The average loss when things go really wrong (beyond the VaR threshold)
+
+**Key Insight**: CVaR is always larger than VaR, showing that tail losses are substantially worse than the threshold suggests.
+:::
+
+The parametric method provides clean, closed-form risk estimates. For a $1 million portfolio, the 95% VaR represents the worst expected daily loss under normal conditions, while the 99% VaR captures more extreme scenarios. The difference between VaR and CVaR highlights tail risk: CVaR is always larger than VaR, indicating that losses beyond VaR are substantially worse.
+
+The parametric method's accuracy depends critically on the normality assumption. The observed fat tails and negative skewness in actual returns suggest this method may underestimate tail risk during market stress.
+
+# 7. Historical Simulation VaR and CVaR
+
+## 7.1 Methodology
+
+Historical simulation makes no distributional assumptions, instead using the empirical distribution of past returns. This non-parametric approach is conceptually simple: VaR is the empirical quantile, and CVaR is the average of losses beyond VaR.
+
+For VaR at confidence level $\alpha$:
+
+$$\text{VaR}_\alpha = -Q_{1-\alpha}(R_P)$$
+
+where $Q_{1-\alpha}$ is the $(1-\alpha)$-empirical quantile of portfolio returns.
+
+For CVaR:
+
+$$\text{CVaR}_\alpha = \mathbb{E}[L_P \mid L_P > \text{VaR}_\alpha]$$
+
+This is simply the average of all losses that are worse than (exceed) the VaR threshold.
+
+## 7.2 Implementation
+
+```{python}
+def historical_var_cvar(returns, confidence_level=0.95):
+    """
+    Calculate VaR and CVaR using historical simulation
+    
+    Parameters:
+    -----------
+    returns : array-like
+        Portfolio returns
+    confidence_level : float
+        Confidence level (e.g., 0.95 for 95%)
+    
+    Returns:
+    --------
+    var : float
+        Value-at-Risk (positive loss magnitude)
+    cvar : float
+        Conditional Value-at-Risk (positive loss magnitude)
+    """
+    # VaR: empirical quantile (negative of the (1-alpha)-percentile)
+    var = -np.percentile(returns, (1 - confidence_level) * 100)
+    
+    # CVaR: average of losses beyond VaR threshold
+    # Losses are -returns, so we find returns <= -var
+    tail_returns = returns[returns <= -var]
+    cvar = -tail_returns.mean()
+    
+    return var, cvar
+
+# Calculate historical VaR and CVaR
+print("\nHISTORICAL SIMULATION METHOD")
+print("=" * 60)
+
+historical_results = {}
+for cl in confidence_levels:
+    var, cvar = historical_var_cvar(R_P, cl)
+    historical_results[cl] = {'VaR': var, 'CVaR': cvar}
+    
+    print(f"\nConfidence Level: {cl*100:.1f}%")
+    print(f"  VaR:  {var*100:.4f}% (${var*1000000:,.2f} on $1M portfolio)")
+    print(f"  CVaR: {cvar*100:.4f}% (${cvar*1000000:,.2f} on $1M portfolio)")
+
+# Visualize historical VaR
+fig, ax = plt.subplots(figsize=(12, 7))
+
+n, bins, patches = ax.hist(R_P, bins=100, density=True, 
+                           alpha=0.6, color='steelblue', edgecolor='black',
+                           label='Historical Returns')
+
+# Highlight tail regions and mark VaR/CVaR
+for cl, color in zip(confidence_levels, ['green', 'orange', 'darkorange', 'red']):
+    var = historical_results[cl]['VaR']
+    cvar = historical_results[cl]['CVaR']
+    
+    ax.axvline(-var, color=color, linestyle='--', linewidth=2.5, 
+               label=f'VaR {cl*100:.1f}% = {var*100:.3f}%')
+    ax.axvline(-cvar, color=color, linestyle=':', linewidth=2.5, 
+               label=f'CVaR {cl*100:.1f}% = {cvar*100:.3f}%')
+
+ax.set_xlabel('Portfolio Return')
+ax.set_ylabel('Density')
+ax.set_title('Historical Simulation VaR and CVaR')
+ax.legend(loc='upper right', fontsize=8, ncol=2)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# Show actual tail observations
+print(f"\n95% VaR Tail Analysis:")
+var_95 = historical_results[0.95]['VaR']
+tail_95 = R_P[R_P <= -var_95]
+print(f"Number of observations in 5% tail: {len(tail_95)}")
+print(f"Worst 5 daily losses:")
+print((tail_95.nsmallest(5) * 100).round(4))
+```
+
+## 7.3 Interpretation
+
+The historical method reflects actual past experience without imposing distributional assumptions. Unlike the parametric method, it captures the true skewness, kurtosis, and tail behavior of returns. Historical simulation has limitations: it assumes the future will resemble the past, provides no estimates for events not present in historical data, and can be unstable with small samples.
+
+# 8. Monte Carlo Simulation VaR and CVaR
+
+## 8.1 Methodology
+
+Monte Carlo simulation generates synthetic return scenarios by sampling from a multivariate normal distribution calibrated to historical mean and covariance:
+
+$$\mathbf{r}^{(s)} \sim \mathcal{N}(\boldsymbol{\mu}, \boldsymbol{\Sigma})$$
+
+The portfolio return for each scenario is:
+
+$$R_P^{(s)} = w^\top \mathbf{r}^{(s)}$$
+
+## 8.2 Role of Correlation
+
+::: {.callout-important}
+## 🔗 Why Correlation Matters
+
+Asset correlations are crucial for portfolio risk. Monte Carlo simulation explicitly models these dependencies through the covariance matrix, ensuring simulated scenarios respect historical correlation patterns.
+
+**Ignoring correlations would severely misestimate portfolio risk!**
+:::
+
+## 8.3 Implementation
+
+```{python}
+def monte_carlo_var_cvar(mu, Sigma, weights, n_simulations=100000, confidence_level=0.95):
+    """
+    Calculate VaR and CVaR using Monte Carlo simulation
+    
+    Parameters:
+    -----------
+    mu : array
+        Mean returns vector
+    Sigma : array
+        Covariance matrix
+    weights : array
+        Portfolio weights
+    n_simulations : int
+        Number of scenarios to simulate
+    confidence_level : float
+        Confidence level (e.g., 0.95 for 95%)
+    
+    Returns:
+    --------
+    var : float
+        Value-at-Risk (positive loss magnitude)
+    cvar : float
+        Conditional Value-at-Risk (positive loss magnitude)
+    simulated_returns : array
+        Simulated portfolio returns
+    """
+    # Generate multivariate normal samples
+    np.random.seed(42)  # For reproducibility
+    simulated_asset_returns = np.random.multivariate_normal(
+        mu.values, Sigma.values, n_simulations
+    )
+    
+    # Calculate portfolio returns for each scenario
+    simulated_returns = simulated_asset_returns @ weights
+    
+    # VaR: empirical quantile of simulated distribution
+    var = -np.percentile(simulated_returns, (1 - confidence_level) * 100)
+    
+    # CVaR: average of losses beyond VaR
+    tail_returns = simulated_returns[simulated_returns <= -var]
+    cvar = -tail_returns.mean()
+    
+    return var, cvar, simulated_returns
+
+# Perform Monte Carlo simulation
+print("\nMONTE CARLO SIMULATION METHOD")
+print("=" * 60)
+print(f"Number of simulations: 100,000")
+
+monte_carlo_results = {}
+simulated_returns_dict = {}
+
+for cl in confidence_levels:
+    var, cvar, sim_returns = monte_carlo_var_cvar(
+        mu, Sigma, optimal_weights, n_simulations=100000, confidence_level=cl
+    )
+    monte_carlo_results[cl] = {'VaR': var, 'CVaR': cvar}
+    simulated_returns_dict[cl] = sim_returns
+    
+    print(f"\nConfidence Level: {cl*100:.1f}%")
+    print(f"  VaR:  {var*100:.4f}% (${var*1000000:,.2f} on $1M portfolio)")
+    print(f"  CVaR: {cvar*100:.4f}% (${cvar*1000000:,.2f} on $1M portfolio)")
+
+# Visualize Monte Carlo results
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+sim_returns = simulated_returns_dict[0.95]
+axes[0].hist(sim_returns, bins=200, density=True, alpha=0.6, 
+            color='lightblue', edgecolor='black', label='Simulated Returns')
+
+axes[0].hist(R_P, bins=100, density=True, alpha=0.4, 
+            color='darkgreen', edgecolor='black', label='Actual Returns')
+
+for cl, color in zip(confidence_levels, ['green', 'orange', 'darkorange', 'red']):
+    var = monte_carlo_results[cl]['VaR']
+    cvar = monte_carlo_results[cl]['CVaR']
+    axes[0].axvline(-var, color=color, linestyle='--', linewidth=2, 
+                   label=f'VaR {cl*100:.1f}% = {var*100:.3f}%', alpha=0.7)
+    axes[0].axvline(-cvar, color=color, linestyle=':', linewidth=2, 
+                   label=f'CVaR {cl*100:.1f}% = {cvar*100:.3f}%', alpha=0.7)
+
+axes[0].set_xlabel('Portfolio Return')
+axes[0].set_ylabel('Density')
+axes[0].set_title('Monte Carlo Simulated Returns Distribution')
+axes[0].legend(loc='upper right', fontsize=7, ncol=2)
+axes[0].grid(True, alpha=0.3)
+
+# Q-Q plot
+from scipy import stats as sp_stats
+sample_size = min(len(R_P), 10000)
+sample_indices = np.random.choice(len(sim_returns), sample_size, replace=False)
+sp_stats.probplot(sim_returns[sample_indices], dist="norm", plot=axes[1])
+axes[1].set_title('Q-Q Plot: Simulated Returns vs Normal Distribution')
+axes[1].grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(f"\nSimulated Returns Statistics:")
+print(f"Mean: {sim_returns.mean():.6f} (vs actual: {R_P.mean():.6f})")
+print(f"Std Dev: {sim_returns.std():.6f} (vs actual: {R_P.std():.6f})")
+print(f"Skewness: {sp_stats.skew(sim_returns):.4f} (vs actual: {R_P.skew():.4f})")
+print(f"Kurtosis: {sp_stats.kurtosis(sim_returns):.4f} (vs actual: {R_P.kurtosis():.4f})")
+```
+
+## 8.4 Interpretation
+
+Monte Carlo simulation bridges parametric and historical approaches: it uses parametric assumptions (multivariate normality) but estimates risk non-parametrically from simulated data. The large number of scenarios (100,000) provides stable estimates with low sampling error.
+
+# 9. Comparison of Methods
+
+## 9.1 Summary Table
+
+```{python}
+# Create comprehensive comparison table
+comparison_data = []
+
+for cl in confidence_levels:
+    comparison_data.append({
+        'Confidence Level': f'{cl*100:.1f}%',
+        'Parametric VaR (%)': f'{parametric_results[cl]["VaR"]*100:.4f}',
+        'Historical VaR (%)': f'{historical_results[cl]["VaR"]*100:.4f}',
+        'Monte Carlo VaR (%)': f'{monte_carlo_results[cl]["VaR"]*100:.4f}',
+        'Parametric CVaR (%)': f'{parametric_results[cl]["CVaR"]*100:.4f}',
+        'Historical CVaR (%)': f'{historical_results[cl]["CVaR"]*100:.4f}',
+        'Monte Carlo CVaR (%)': f'{monte_carlo_results[cl]["CVaR"]*100:.4f}'
+    })
+
+comparison_df = pd.DataFrame(comparison_data)
+print("\nCOMPARISON OF VAR AND CVAR ACROSS METHODS")
+print("=" * 110)
+print(comparison_df.to_string(index=False))
+
+# Visual comparison
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+methods = ['Parametric', 'Historical', 'Monte Carlo']
+cl_labels = [f'{cl*100:.1f}%' for cl in confidence_levels]
+
+# VaR comparison
+var_data = {
+    'Parametric': [parametric_results[cl]['VaR']*100 for cl in confidence_levels],
+    'Historical': [historical_results[cl]['VaR']*100 for cl in confidence_levels],
+    'Monte Carlo': [monte_carlo_results[cl]['VaR']*100 for cl in confidence_levels]
+}
+
+x = np.arange(len(cl_labels))
+width = 0.25
+colors_bar = ['#FF6B6B', '#4ECDC4', '#45B7D1']
+
+for i, (method, color) in enumerate(zip(methods, colors_bar)):
+    axes[0].bar(x + i*width, var_data[method], width, label=method, 
+               color=color, edgecolor='black', alpha=0.8)
+
+axes[0].set_xlabel('Confidence Level')
+axes[0].set_ylabel('VaR (%)')
+axes[0].set_title('Value-at-Risk Comparison Across Methods')
+axes[0].set_xticks(x + width)
+axes[0].set_xticklabels(cl_labels)
+axes[0].legend()
+axes[0].grid(axis='y', alpha=0.3)
+
+# CVaR comparison
+cvar_data = {
+    'Parametric': [parametric_results[cl]['CVaR']*100 for cl in confidence_levels],
+    'Historical': [historical_results[cl]['CVaR']*100 for cl in confidence_levels],
+    'Monte Carlo': [monte_carlo_results[cl]['CVaR']*100 for cl in confidence_levels]
+}
+
+for i, (method, color) in enumerate(zip(methods, colors_bar)):
+    axes[1].bar(x + i*width, cvar_data[method], width, label=method, 
+               color=color, edgecolor='black', alpha=0.8)
+
+axes[1].set_xlabel('Confidence Level')
+axes[1].set_ylabel('CVaR (%)')
+axes[1].set_title('Conditional Value-at-Risk Comparison Across Methods')
+axes[1].set_xticks(x + width)
+axes[1].set_xticklabels(cl_labels)
+axes[1].legend()
+axes[1].grid(axis='y', alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+```
+
+## 9.2 Methodological Comparison
+
+::: {.callout-tip}
+## 🔍 Key Differences Between Methods
+
+**Parametric vs Historical:**
+- Parametric generally produces lower risk estimates (underestimates tail risk)
+- Historical captures actual fat tails and extreme events directly from data
+
+**Monte Carlo vs Historical:**
+- Similar results when normality is reasonable
+- Monte Carlo provides smoother estimates and can generate new scenarios
+
+**Sensitivity to Assumptions:**
+- **Parametric**: Most sensitive—biased if returns are non-normal
+- **Historical**: Assumes past = future (stationarity)
+- **Monte Carlo**: Flexible but requires correct parameters
+:::
+
+# 10. Sensitivity Analysis
+
+## 10.1 Effect of Confidence Level
+
+```{python}
+# Sensitivity analysis
+confidence_range = np.arange(0.85, 1.00, 0.01)
+
+param_var_sensitivity = []
+hist_var_sensitivity = []
+mc_var_sensitivity = []
+
+for cl in confidence_range:
+    # Parametric
+    p_var, _ = parametric_var_cvar(R_P, cl)
+    param_var_sensitivity.append(p_var * 100)
+    
+    # Historical
+    h_var, _ = historical_var_cvar(R_P, cl)
+    hist_var_sensitivity.append(h_var * 100)
+    
+    # Monte Carlo (reusing simulated returns from 95% case)
+    mc_var = -np.percentile(simulated_returns_dict[0.95], (1 - cl) * 100)
+    mc_var_sensitivity.append(mc_var * 100)
+
+fig, ax = plt.subplots(figsize=(12, 7))
+
+ax.plot(confidence_range * 100, param_var_sensitivity, 'o-', linewidth=2, 
+        markersize=4, label='Parametric', color='#FF6B6B')
+ax.plot(confidence_range * 100, hist_var_sensitivity, 's-', linewidth=2, 
+        markersize=4, label='Historical', color='#4ECDC4')
+ax.plot(confidence_range * 100, mc_var_sensitivity, '^-', linewidth=2, 
+        markersize=4, label='Monte Carlo', color='#45B7D1')
+
+# Mark the tested confidence levels
+for cl in confidence_levels:
+    ax.axvline(cl*100, color='gray', linestyle='--', alpha=0.3, linewidth=1)
+
+ax.set_xlabel('Confidence Level (%)')
+ax.set_ylabel('VaR (%)')
+ax.set_title('VaR Sensitivity to Confidence Level')
+ax.legend()
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+## 10.2 Why VaR Increases with Confidence Level
+
+As the confidence level increases (moving further into the left tail), VaR increases because we are asking: "What is the maximum loss that will not be exceeded with even higher probability?" Higher confidence requires considering more extreme scenarios, hence larger potential losses.
+
+# 11. VaR Backtesting Using Kupiec Test
+
+::: {.callout-note icon=false}
+## 🔍 What is VaR Backtesting?
+
+VaR backtesting validates the accuracy of risk models by comparing forecasted VaR levels against realized losses. A well-calibrated VaR model should experience violations (losses exceeding VaR) at the expected frequency.
+
+**Key Question**: Do realized losses exceed the VaR at the correct frequency?
+:::
+
+## 11.1 Backtesting Framework
+
+::: {.callout-tip}
+## 🎯 Why Test Multiple Confidence Levels?
+
+We test VaR at **four different confidence levels**: 90%, 95%, 97.5%, and 99%.
+
+**Rationale**:
+- **90%**: 10% violation rate - provides more data points for testing (better statistical power)
+- **95%**: Standard in many applications - balances conservatism and practicality
+- **97.5%**: Middle ground - useful for identifying model behavior
+- **99%**: Regulatory standard (Basel) - very conservative, few expected violations
+
+**Expected violations** for your data (~{len(R_P)} trading days):
+- 90% → ~{int(len(R_P)*0.10)} violations (10% rate)
+- 95% → ~{int(len(R_P)*0.05)} violations (5% rate)  
+- 97.5% → ~{int(len(R_P)*0.025)} violations (2.5% rate)
+- 99% → ~{int(len(R_P)*0.01)} violations (1% rate)
+
+Testing multiple levels helps diagnose **where** the model breaks down!
+:::
+
+VaR backtesting evaluates whether the VaR model produces accurate forecasts by examining the historical pattern of **VaR violations** (also called **exceptions**). For each trading day $t$, we define a violation indicator:
+
+$$
+I_t = \begin{cases}
+1, & L_t > \widehat{\text{VaR}}_{t,\alpha} \\
+0, & \text{otherwise}
+\end{cases}
+$$
+
+where $L_t = -R_{P,t}$ is the realized loss and $\widehat{\text{VaR}}_{t,\alpha}$ is the forecasted VaR at confidence level $\alpha$.
+
+Under a correct VaR model:
+$$\mathbb{P}(I_t = 1) = 1 - \alpha$$
+
+For example, a 95% VaR should be violated approximately 5% of the time, and a 99% VaR should be violated approximately 1% of the time.
+
+```{python}
+# Helper function to compute violations
+def compute_var_violations(returns, var_forecast):
+    """
+    Compute VaR violation indicators
+    
+    Parameters:
+    -----------
+    returns : array-like
+        Portfolio returns
+    var_forecast : float or array-like
+        VaR forecast (constant or time-varying)
+    
+    Returns:
+    --------
+    violations : array
+        Binary violation indicators (1 = violation, 0 = no violation)
+    """
+    losses = -returns
+    if np.isscalar(var_forecast):
+        violations = (losses > var_forecast).astype(int)
+    else:
+        violations = (losses > var_forecast).astype(int)
+    return violations
+
+# Initialize backtest_results and compute violations for all methods
+backtest_results = {}
+
+for method_name, method_results in [
+    ('Parametric', parametric_results),
+    ('Historical', historical_results),
+    ('Monte Carlo', monte_carlo_results)
+]:
+    backtest_results[method_name] = {}
+    for cl in confidence_levels:
+        var = method_results[cl]['VaR']
+        violations = compute_var_violations(R_P, var)
+        backtest_results[method_name][cl] = {'violations': violations}
+
+print("Violations computed for all methods and confidence levels.")
+print(f"Ready for backtesting with {len(R_P)} days of data.")
+```
+
+## 11.2 Kupiec Test (Likelihood Ratio Test)
+
+::: {.callout-tip}
+## 📊 What Does the Kupiec Test Check?
+
+The **Kupiec test** (also called the **Proportion of Failures test** or **Likelihood Ratio test**) checks whether the **total number of VaR violations** is consistent with the confidence level using a likelihood ratio framework.
+
+**What it checks**: Correct frequency of violations  
+**What it ignores**: Timing and clustering of violations
+
+This is the standard regulatory test used in Basel frameworks.
+:::
+
+### 11.2.1 Mathematical Foundation
+
+Let:
+- $T$ = number of backtesting days
+- $x = \sum_{t=1}^T I_t$ = observed number of violations
+- Expected violations: $\mathbb{E}[x] = (1-\alpha)T$
+
+**Hypotheses**:
+$$
+\begin{aligned}
+H_0 &: \mathbb{P}(I_t=1) = 1-\alpha \quad \text{(correct coverage)} \\
+H_1 &: \mathbb{P}(I_t=1) \neq 1-\alpha \quad \text{(incorrect coverage)}
+\end{aligned}
+$$
+
+**Likelihood Ratio Test Statistic**:
+
+The Kupiec test uses a likelihood ratio (LR) statistic that compares the likelihood under the null hypothesis to the likelihood under the unrestricted model:
+
+$$
+\boxed{
+LR_{\text{POF}} = -2 \ln \left[ \frac{(1-\alpha)^x \alpha^{T-x}} {\left(\frac{x}{T}\right)^x \left(1-\frac{x}{T}\right)^{T-x}} \right]
+}
+$$
+
+Where:
+- Numerator: likelihood assuming true violation rate is $1-\alpha$
+- Denominator: likelihood using the empirical violation rate $\hat{p} = x/T$
+
+**Asymptotic Distribution**: Under $H_0$, $LR_{\text{POF}} \sim \chi^2(1)$
+
+**Decision Rule**: At significance level $\gamma$ (typically 5%):
+
+$$\text{Reject } H_0 \text{ if } LR_{\text{POF}} > \chi^2_{1, 1-\gamma}$$
+
+where $\chi^2_{1, 1-\gamma} \approx 3.84$ for $\gamma = 0.05$.
+
+### 11.2.2 Implementation and Results
+
+```{python}
+def kupiec_test(violations, confidence_level, significance=0.05):
+    """
+    Perform Kupiec (Proportion of Failures) test
+    
+    Parameters:
+    -----------
+    violations : array
+        Binary violation indicators
+    confidence_level : float
+        VaR confidence level (e.g., 0.95)
+    significance : float
+        Test significance level (default 0.05)
+    
+    Returns:
+    --------
+    dict with test results
+    """
+    T = len(violations)
+    x = violations.sum()
+    p = 1 - confidence_level  # Expected violation rate
+    
+    # Empirical violation rate
+    p_hat = x / T
+    
+    # Likelihood ratio test statistic
+    if x == 0:
+        lr_pof = -2 * (T * np.log(1 - p))
+    elif x == T:
+        lr_pof = -2 * (T * np.log(p))
+    else:
+        lr_pof = -2 * (x * np.log(p / p_hat) + (T - x) * np.log((1 - p) / (1 - p_hat)))
+    
+    # Critical value (chi-square with 1 degree of freedom)
+    critical_value = stats.chi2.ppf(1 - significance, df=1)
+    
+    # P-value
+    p_value = 1 - stats.chi2.cdf(lr_pof, df=1)
+    
+    # Decision
+    reject = lr_pof > critical_value
+    
+    return {
+        'test': 'Kupiec (POF)',
+        'violations': int(x),
+        'expected_violations': T * p,
+        'violation_rate': p_hat,
+        'expected_rate': p,
+        'LR_statistic': lr_pof,
+        'critical_value': critical_value,
+        'p_value': p_value,
+        'reject_H0': reject,
+        'conclusion': 'Model REJECTED' if reject else 'Model ACCEPTED'
+    }
+
+# Perform Kupiec test
+print("\n" + "=" * 100)
+print("KUPIEC TEST (LIKELIHOOD RATIO TEST FOR PROPORTION OF FAILURES)")
+print("=" * 100)
+
+kupiec_results_storage = {}
+
+for method_name in ['Parametric', 'Historical', 'Monte Carlo']:
+    print(f"\n{method_name.upper()} METHOD")
+    print("-" * 100)
+    
+    kupiec_results_storage[method_name] = {}
+    
+    for cl in confidence_levels:
+        violations = backtest_results[method_name][cl]['violations']
+        var_value = eval(f"{method_name.lower().replace(' ', '_')}_results")[cl]['VaR']
+        
+        # Run Kupiec test
+        kupiec_result = kupiec_test(violations, cl)
+        kupiec_results_storage[method_name][cl] = kupiec_result
+        backtest_results[method_name][cl]['kupiec'] = kupiec_result
+        
+        print(f"\nConfidence Level: {cl*100:.1f}% | VaR Threshold: {var_value*100:.4f}%")
+        print(f"{'─' * 100}")
+        print(f"Observed Violations:     {kupiec_result['violations']} out of {len(R_P)} days")
+        print(f"Expected Violations:     {kupiec_result['expected_violations']:.2f} days")
+        print(f"Observed Violation Rate: {kupiec_result['violation_rate']*100:.2f}%")
+        print(f"Expected Violation Rate: {kupiec_result['expected_rate']*100:.2f}%")
+        print(f"\nTest Statistics:")
+        print(f"  LR Statistic:          {kupiec_result['LR_statistic']:.4f}")
+        print(f"  Critical Value (5%):   {kupiec_result['critical_value']:.4f}")
+        print(f"  P-value:               {kupiec_result['p_value']:.4f}")
+        print(f"\n  Decision: {kupiec_result['conclusion']}")
+        
+        if kupiec_result['reject_H0']:
+            if kupiec_result['violations'] > kupiec_result['expected_violations']:
+                print(f"  → VaR UNDERESTIMATES risk (too many violations)")
+            else:
+                print(f"  → VaR OVERESTIMATES risk (too few violations)")
+```
+
+### 11.2.3 Interpretation
+
+```{python}
+print("\n" + "=" * 100)
+print("KUPIEC TEST INTERPRETATION")
+print("=" * 100)
+
+for cl in confidence_levels:
+    print(f"\n{cl*100:.1f}% Confidence Level Results:")
+    print(f"{'─' * 100}")
+    
+    for method_name in ['Parametric', 'Historical', 'Monte Carlo']:
+        result = kupiec_results_storage[method_name][cl]
+        obs = result['violations']
+        exp = result['expected_violations']
+        diff = obs - exp
+        
+        status = "✓ PASS" if not result['reject_H0'] else "✗ FAIL"
+        
+        print(f"{method_name:15s}: {status:8s} | Obs: {obs:3d} | Exp: {exp:5.1f} | Diff: {diff:+5.1f} | LR: {result['LR_statistic']:6.3f} | p: {result['p_value']:.4f}")
+    print()
+```
+
+::: {.callout-note}
+## 📖 Interpreting the Results
+
+**Passed Test (✓)**: The observed violation rate is statistically consistent with the expected rate. The VaR model has correct unconditional coverage.
+
+**Failed Test (✗)**:
+- **Too many violations** (Obs > Exp): VaR underestimates risk. The model is too aggressive.
+- **Too few violations** (Obs < Exp): VaR overestimates risk. The model is too conservative.
+
+**P-value interpretation**:
+- p > 0.05: Do not reject $H_0$ (model is acceptable)
+- p < 0.05: Reject $H_0$ (model is miscalibrated)
+:::
+
+## 11.3 Visualization of Violations
+
+```{python}
+# Visualize violations over time
+fig, axes = plt.subplots(len(confidence_levels), 1, figsize=(14, 4*len(confidence_levels)))
+
+if len(confidence_levels) == 1:
+    axes = [axes]
+
+for idx, cl in enumerate(confidence_levels):
+    ax = axes[idx]
+    
+    # Plot returns
+    ax.plot(R_P.index, R_P, alpha=0.5, linewidth=0.8, color='steelblue', label='Portfolio Returns')
+    ax.axhline(y=0, color='black', linestyle='-', alpha=0.3, linewidth=0.5)
+    
+    # Plot VaR thresholds for each method
+    colors = {'Parametric': '#FF6B6B', 'Historical': '#4ECDC4', 'Monte Carlo': '#45B7D1'}
+    linestyles = {'Parametric': '--', 'Historical': '-.', 'Monte Carlo': ':'}
+    
+    for method_name in ['Parametric', 'Historical', 'Monte Carlo']:
+        var = eval(f"{method_name.lower().replace(' ', '_')}_results")[cl]['VaR']
+        ax.axhline(y=-var, color=colors[method_name], linestyle=linestyles[method_name], 
+                  linewidth=2, label=f'{method_name} VaR = {var*100:.3f}%', alpha=0.8)
+        
+        # Mark violations
+        violations = backtest_results[method_name][cl]['violations']
+        violation_dates = R_P.index[violations == 1]
+        violation_returns = R_P[violations == 1]
+        
+        if len(violation_returns) > 0:
+            ax.scatter(violation_dates, violation_returns, 
+                      color=colors[method_name], s=50, alpha=0.6, 
+                      marker='x', linewidths=2, zorder=5)
+    
+    ax.set_ylabel('Return')
+    ax.set_title(f'VaR Violations Over Time ({cl*100:.1f}% Confidence Level)')
+    ax.legend(loc='upper right', fontsize=8)
+    ax.grid(True, alpha=0.3)
+
+axes[-1].set_xlabel('Date')
+plt.tight_layout()
+plt.show()
+```
+
+## 11.4 Basel Traffic Light Approach
+
+::: {.callout-note icon=false}
+## 🚦 Basel Committee Traffic Light Zones
+
+For regulatory purposes, the Basel Committee on Banking Supervision uses a "traffic light" approach for 99% VaR over 250 trading days:
+
+| Violations | Zone   | Interpretation                         |
+|-----------|--------|----------------------------------------|
+| 0–4       | Green  | Model acceptable                       |
+| 5–9       | Yellow | Model questionable - further review    |
+| ≥10       | Red    | Model rejected - must increase capital |
+:::
+
+```{python}
+# Basel Traffic Light Analysis for 99% VaR
+print("\n" + "=" * 80)
+print("BASEL TRAFFIC LIGHT ANALYSIS (99% VaR)")
+print("=" * 80)
+
+T_basel = len(R_P)
+print(f"Backtesting period: {T_basel} days")
+print(f"\nBasel zones (for 250 days, scaled to {T_basel} days):")
+
+scale_factor = T_basel / 250
+green_threshold = int(4 * scale_factor)
+yellow_threshold = int(9 * scale_factor)
+
+print(f"  Green zone:  0 to {green_threshold} violations (Model acceptable)")
+print(f"  Yellow zone: {green_threshold+1} to {yellow_threshold} violations (Model questionable)")
+print(f"  Red zone:    {yellow_threshold+1}+ violations (Model rejected)")
+
+print(f"\nResults for 99% VaR:")
+print(f"{'─' * 80}")
+for method_name in ['Parametric', 'Historical', 'Monte Carlo']:
+    violations_99 = backtest_results[method_name][0.99]['kupiec']['violations']
+    
+    if violations_99 <= green_threshold:
+        zone = "GREEN ✓"
+        interpretation = "Model acceptable"
+        color_code = "🟢"
+    elif violations_99 <= yellow_threshold:
+        zone = "YELLOW ⚠"
+        interpretation = "Model questionable"
+        color_code = "🟡"
+    else:
+        zone = "RED ✗"
+        interpretation = "Model rejected"
+        color_code = "🔴"
+    
+    print(f"{color_code} {method_name:15s}: {violations_99:2d} violations → {zone:12s} ({interpretation})")
+```
+
+## 11.5 Summary and Recommendations
+
+```{python}
+# Create comprehensive summary table
+summary_data = []
+
+for method_name in ['Parametric', 'Historical', 'Monte Carlo']:
+    for cl in confidence_levels:
+        kupiec = backtest_results[method_name][cl]['kupiec']
+        
+        summary_data.append({
+            'Method': method_name,
+            'Confidence': f'{cl*100:.1f}%',
+            'Violations': kupiec['violations'],
+            'Expected': f"{kupiec['expected_violations']:.1f}",
+            'Rate (%)': f"{kupiec['violation_rate']*100:.2f}",
+            'LR Stat': f"{kupiec['LR_statistic']:.2f}",
+            'p-value': f"{kupiec['p_value']:.3f}",
+            'Result': '✓ PASS' if not kupiec['reject_H0'] else '✗ FAIL'
+        })
+
+summary_df = pd.DataFrame(summary_data)
+print("\n" + "=" * 100)
+print("COMPREHENSIVE BACKTESTING SUMMARY")
+print("=" * 100)
+print(summary_df.to_string(index=False))
+
+print("\n" + "=" * 100)
+print("INTERPRETATION GUIDE")
+print("=" * 100)
+print("✓ PASS = Model accepted (violations match expected frequency)")
+print("✗ FAIL = Model rejected (too many or too few violations)")
+print("\nKupiec Test: Checks if violation FREQUENCY matches expected rate")
+print("LR Stat = Likelihood Ratio statistic | p-value: reject if p < 0.05")
+```
+
+```{python}
+# Analyze which confidence level works best for each method
+print("\n" + "=" * 100)
+print("CONFIDENCE LEVEL RECOMMENDATION ANALYSIS")
+print("=" * 100)
+
+for method_name in ['Parametric', 'Historical', 'Monte Carlo']:
+    print(f"\n{method_name.upper()} METHOD:")
+    print("-" * 100)
+    
+    passing_levels = []
+    for cl in confidence_levels:
+        kupiec = backtest_results[method_name][cl]['kupiec']
+        
+        # Check if test passes
+        test_pass = not kupiec['reject_H0']
+        
+        status = "✓ RECOMMENDED" if test_pass else "✗ Not recommended"
+        passing_levels.append(test_pass)
+        
+        print(f"  {cl*100:5.1f}% confidence: {status}")
+    
+    # Overall recommendation
+    if any(passing_levels):
+        recommended_idx = [i for i, p in enumerate(passing_levels) if p]
+        recommended_cl = [confidence_levels[i] for i in recommended_idx]
+        print(f"\n  → RECOMMENDED CONFIDENCE LEVELS: {[f'{cl*100:.1f}%' for cl in recommended_cl]}")
+    else:
+        print(f"\n  → WARNING: No confidence level passes the test!")
+        print(f"     Consider: (1) Adjusting portfolio selection, (2) Using different method, (3) Accepting model limitations")
+```
+
+```{python}
+# Count passes for each method
+print("\n" + "=" * 100)
+print("METHOD COMPARISON: TOTAL PASSES")
+print("=" * 100)
+
+for method_name in ['Parametric', 'Historical', 'Monte Carlo']:
+    passes = sum([not backtest_results[method_name][cl]['kupiec']['reject_H0'] 
+                  for cl in confidence_levels])
+    
+    total_tests = len(confidence_levels)
+    
+    print(f"\n{method_name}:")
+    print(f"  Tests passed: {passes}/{total_tests} ({passes/total_tests*100:.0f}%)")
+    
+    if passes == total_tests:
+        print(f"  ★★★ EXCELLENT: All tests pass!")
+    elif passes >= total_tests * 0.5:
+        print(f"  ★★ GOOD: Majority of tests pass")
+    elif passes > 0:
+        print(f"  ★ FAIR: Some tests pass - use with caution")
+    else:
+        print(f"  ✗ POOR: No tests pass - model needs revision")
+```
+
+::: {.callout-important}
+## 🎯 Key Takeaways from Backtesting
+
+**What We Learn**:
+1. **Kupiec Test** reveals if the VaR model is properly calibrated (correct frequency of violations)
+2. **Comparison across methods** shows which approach provides the most accurate risk forecasts
+3. **Multiple confidence levels** help diagnose where the model works and where it fails
+
+**Common Patterns**:
+- **Too few violations**: Portfolio is more conservative than model assumes → Use lower confidence level (90% instead of 95%)
+- **Too many violations**: Model underestimates risk → Use Historical Simulation or adjust portfolio
+- **Different results across confidence levels**: Some confidence levels work better than others for this portfolio
+
+**Regulatory Implications**:
+- Banks must backtest VaR models and maintain capital buffers
+- Persistent red zone violations trigger regulatory penalties
+- Model validation is required by Basel III
+
+**For This Analysis**:
+- If most tests fail, **don't panic**—it means you need to use a different confidence level or method
+- Document which confidence levels pass for your portfolio
+- Recommend the appropriate confidence level based on backtest results
+:::
+
+# 12. Conclusion
+
+## 12.1 Summary of Findings
+
+This project constructed an efficient frontier using mean-variance optimization and selected a balanced portfolio to measure risk using Value-at-Risk and Conditional Value-at-Risk. We then validated these risk estimates through Kupiec backtesting. Key findings:
+
+1. **Efficient frontier provides optimal risk-return tradeoffs**: The selected portfolio offers superior risk-adjusted returns compared to naive equal-weighting
+
+2. **Risk estimates vary across methods**: Historical simulation produces higher estimates than parametric, reflecting fat tails and non-normality
+
+3. **CVaR always exceeds VaR**: Tail losses beyond the VaR threshold are substantially worse, highlighting the importance of measuring tail risk beyond simple quantiles
+
+4. **Backtesting reveals model accuracy**: 
+   - Kupiec test validates whether violation frequency matches expectations
+   - Different methods show varying degrees of calibration accuracy
+   - Multiple confidence levels help identify the appropriate risk measure for this portfolio
+
+5. **Correlation structure matters**: Diversification benefits depend critically on asset dependencies, which Monte Carlo simulation explicitly models
+
+## 12.2 Methodological Assessment
+
+::: {.callout-note icon=false}
+## 🏆 Method Rankings
+
+**Most Conservative (Highest Risk Estimates)**: Historical Simulation  
+**Least Conservative (Lowest Risk Estimates)**: Parametric Method  
+**Best for Regulatory Compliance**: Historical Simulation (captures actual tail behavior)  
+**Best for Daily Risk Management**: Combine all three approaches  
+:::
+
+**Parametric Method**:
+- **Strengths**: Fast, analytically tractable, suitable for large portfolios
+- **Weaknesses**: Assumes normality, underestimates tail risk, may fail backtests during crises
+- **Best Use**: Preliminary analysis, stable market conditions
+
+**Historical Simulation**:
+- **Strengths**: Non-parametric, captures actual distributions, no normality assumption
+- **Weaknesses**: Limited by historical data, assumes stationarity
+- **Best Use**: Regulatory reporting, stress testing with actual historical scenarios
+
+**Monte Carlo Simulation**:
+- **Strengths**: Flexible, explicitly models correlations, can incorporate complex dynamics
+- **Weaknesses**: Still assumes normality (in our implementation), computationally intensive
+- **Best Use**: Scenario analysis, portfolios with complex derivatives
+
+## 12.3 Backtesting Insights
+
+The Kupiec backtesting analysis provides critical validation:
+
+- Models that **pass the test** have correct violation frequency and are properly calibrated
+- Models that **fail the test** are fundamentally miscalibrated (too many or too few violations)
+- **Basel traffic light zones** provide a practical, regulatory-approved framework for 99% VaR
+- **Multiple confidence levels** reveal that some portfolios work better at 90-95% than at 99%
+
+## 12.4 Practical Implications
+
+**For Portfolio Managers**:
+1. Use the efficient frontier to construct portfolios that maximize risk-adjusted returns
+2. Implement multiple VaR methodologies to cross-validate risk estimates
+3. Backtest regularly and adjust confidence levels based on results
+4. Adjust capital allocation and position sizing based on VaR/CVaR estimates
+
+**For Risk Managers**:
+1. Backtest VaR models regularly (daily for trading desks, monthly for portfolios)
+2. Use appropriate confidence levels that pass backtesting for your portfolio
+3. Maintain capital buffers consistent with CVaR, not just VaR
+4. Document model limitations and communicate them to stakeholders
+
+**For This Portfolio**:
+1. Review the backtest results to identify which confidence levels pass
+2. Use the recommended confidence level(s) for ongoing risk measurement
+3. If no confidence level passes, consider adjusting portfolio selection
+4. Document the limitations honestly in any reports
+
+## 12.5 Limitations and Future Extensions
+
+**Current Limitations**:
+- Assumes normality (except historical simulation)
+- Does not model time-varying volatility (GARCH effects)
+- Static portfolio weights (no rebalancing)
+- No incorporation of market microstructure or liquidity risk
+
+**Potential Extensions**:
+1. **GARCH-based VaR**: Model volatility clustering explicitly
+2. **Extreme Value Theory (EVT)**: Better model extreme tail events
+3. **Dynamic rebalancing**: Incorporate transaction costs and optimal rebalancing rules
+4. **Copula-based models**: Capture non-linear dependencies and tail dependence
+5. **Stress testing**: Simulate VaR under specific crisis scenarios
+6. **CVaR optimization**: Directly minimize CVaR instead of variance in portfolio construction
+7. **Christoffersen test**: Add independence testing to detect violation clustering
+
+---
+
+## References
+
+- Basel Committee on Banking Supervision (2019). *Minimum capital requirements for market risk*
+- Jorion, P. (2007). *Value at Risk: The New Benchmark for Managing Financial Risk* (3rd ed.)
+- Kupiec, P. H. (1995). *Techniques for verifying the accuracy of risk measurement models*. Journal of Derivatives, 3(2), 73-84
+- Markowitz, H. (1952). *Portfolio Selection*. The Journal of Finance, 7(1), 77-91
+- McNeil, A. J., Frey, R., & Embrechts, P. (2015). *Quantitative Risk Management: Concepts, Techniques and Tools* (2nd ed.)
+- Rockafellar, R. T., & Uryasev, S. (2000). *Optimization of conditional value-at-risk*. Journal of Risk, 2, 21-42
+
+---
